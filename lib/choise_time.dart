@@ -40,9 +40,9 @@ class _choise_menuState extends State<choise_menu> {
   @override
   void initState() {
     super.initState();
-    // scanQrCode();
+    scanQrCode();
     getUser();
-    data_promotion("1");
+    // data_promotion("1");
     print(id_promotion);
   }
 

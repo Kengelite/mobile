@@ -10,8 +10,8 @@ import 'package:path_provider/path_provider.dart';
 class ApiProvider {
   ApiProvider();
 
-//  String endPoint = 'https://anxious-slug-peplum.cyclic.app/';
-  String endPoint = 'http://10.0.2.2:3000';
+ String endPoint = 'https://anxious-slug-peplum.cyclic.app/';
+  // String endPoint = 'http://10.0.2.2:3000';
   Future<http.Response> doLogin(String username, String password) async {
     print("sswqwq");
 

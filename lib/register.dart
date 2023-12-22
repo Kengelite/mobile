@@ -42,9 +42,9 @@ class _RegisterPageState extends State<RegisterPage> {
             if (jsonRes['ok'] == true) {
               SharedPreferences prefs = await SharedPreferences.getInstance();
               prefs.setString('username', (jsonRes['data'][0]['username']));
-              prefs.setInt('id', (jsonRes['data'][0]['id_cus']));
-              Navigator.pushReplacement(
-                context, MaterialPageRoute(builder: (context) => Home_menu()));
+              // prefs.setInt('id', (jsonRes['data'][0]['id_cus']));
+              Navigator.pushReplacement(context,
+                  MaterialPageRoute(builder: (context) => Home_menu()));
             } else {
               alertextbox();
             }
@@ -112,10 +112,9 @@ class _RegisterPageState extends State<RegisterPage> {
                                   return 'กรุณากรอกชื่อ';
                                 }
                               },
-                     
                               controller: _ctrlfname,
                               decoration: InputDecoration(
-    
+
                                   // ไอคอนข้างหน้า
                                   // prefixIcon: Icon(Icons.add),
                                   fillColor: Colors.white70,
