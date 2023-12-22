@@ -3,7 +3,6 @@ import 'package:qr_flutter/qr_flutter.dart';
 
 class QrCodeGenerator extends StatelessWidget {
   final String qrData;
-
   QrCodeGenerator({required this.qrData});
 
   @override
