@@ -171,7 +171,7 @@ class _Page_choise_carwashState extends State<Page_choise_carwash> {
                                     Text(
                                       'เส้นทาง',
                                       style: TextStyle(
-                                        fontSize: 16,
+                                        fontSize: 12,
                                         fontFamily: 'Kodchasan',
                                         color: Colors.white,
                                       ),

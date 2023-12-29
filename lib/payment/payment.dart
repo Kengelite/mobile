@@ -266,7 +266,7 @@ class _payment_moneyState extends State<payment_money> {
                               child: Text('ยืนยัน',
                                   style: TextStyle(
                                       fontSize: 16,
-                                      color: Colors.white,
+                                      color: Colors.black,
                                       fontFamily: 'Kodchasan')),
                             ),
                           ),

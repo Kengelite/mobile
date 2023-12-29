@@ -1,9 +1,12 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 import 'package:finalproject/register.dart';
 import 'login.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  Firebase.initializeApp();
   runApp(const MyApp());
 }
 
@@ -69,7 +72,8 @@ class MyWidget extends StatelessWidget {
                   },
                   icon: Icon(Icons.login),
                   // "เข้าสู่ระบบ".toUpperCase() ให้ตัวใหญ่
-                  label: Text("เข้าสู่ระบบ",style: TextStyle(fontSize: 18,fontFamily: 'Kodchasan')),
+                  label: Text("เข้าสู่ระบบ",
+                      style: TextStyle(fontSize: 18, fontFamily: 'Kodchasan')),
                 ),
               ),
             ),
@@ -98,7 +102,9 @@ class MyWidget extends StatelessWidget {
                       },
                       icon: Icon(Icons.app_registration_outlined),
                       // "เข้าสู่ระบบ".toUpperCase() ให้ตัวใหญ่
-                      label: Text("สมัครสมาชิก",style: TextStyle(fontSize: 18,fontFamily: 'Kodchasan')))),
+                      label: Text("สมัครสมาชิก",
+                          style: TextStyle(
+                              fontSize: 18, fontFamily: 'Kodchasan')))),
             )
           ]),
     );

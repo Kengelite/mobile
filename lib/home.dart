@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
+import 'package:finalproject/fet.dart';
+import 'package:finalproject/manual.dart';
 import 'package:finalproject/payment/payment.dart';
 import 'package:finalproject/show_timeuse.dart';
 import 'package:flutter/material.dart';
@@ -386,7 +388,7 @@ class _HomePageState extends State<HomePage> {
                         Padding(
                           padding: const EdgeInsets.fromLTRB(0, 10, 0, 10),
                           child: Container(
-                            width: 110,
+                            width: 130,
                             height: 80,
                             // decoration: BoxDecoration(
                             //     color: Colors.green,
@@ -434,16 +436,16 @@ class _HomePageState extends State<HomePage> {
                         Padding(
                           padding: const EdgeInsets.all(10.0),
                           child: Container(
-                            width: 120,
+                            width: 130,
                             height: 80,
                             child: ElevatedButton(
                                 onPressed: () {
                                   Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                          // QrCodeScanner ManualPage()) App_test
+                                          // QrCodeScanner FetchData ManualPage()) App_test
 
-                                          builder: (context) => App_test()));
+                                          builder: (context) => ManualPage()));
                                 },
                                 style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.white,

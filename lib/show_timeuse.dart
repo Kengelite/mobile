@@ -1,13 +1,28 @@
 import 'dart:convert';
 
 import 'package:finalproject/api_provider.dart';
+import 'package:finalproject/home.dart';
 import 'package:finalproject/home_menu.dart';
+import 'package:firebase_database/ui/firebase_animated_list.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class App_test extends StatefulWidget {
-  const App_test({super.key});
+  final double? credit;
+  final String? id_carname;
+  final int? id_promotion;
+  final int? credit_promotion;
+  // const App_test({required this.credit, required this.id_carname});
+  App_test(
+      {Key? key,
+      this.credit,
+      this.id_carname,
+      this.id_promotion,
+      this.credit_promotion})
+      : super(key: key);
 
   @override
   State<App_test> createState() => _App_testState();
@@ -15,194 +30,526 @@ class App_test extends StatefulWidget {
 
 class _App_testState extends State<App_test> {
   late FirebaseDatabase rtdb;
+  late DatabaseReference dbrtdb;
+
   ApiProvider apiProvider = ApiProvider();
-  String? ph;
+
+  int credit_show = 0;
   String type = "";
   String? f_data;
+  late SharedPreferences prefs;
+  String? emailname;
+  double? credit_now;
+  String? id_carname_now;
   int x = 0;
-
+  int check_status_now = 0;
+  int x_controller = 0;
+  int? id_promotion_now;
+  int? credit_promotion_now;
+  String? name_fb;
+  int check_send_data = 0;
+  int? credit_start;
+  int credit_show_old = 0;
+  DatabaseReference? _databaseReference;
+  // Query refQ = FirebaseDatabase.instance.ref().child("box1");
   @override
   void initState() {
     super.initState();
     initializeFirebase();
+    getUser();
+    setState(() {
+      credit_now = widget.credit;
+      id_carname_now = widget.id_carname;
+      id_promotion_now = widget.id_promotion;
+      credit_promotion_now = widget.credit_promotion;
+      name_fb = '/box$id_carname_now/credit_balance';
+    });
+
+    print(credit_promotion_now);
+    print(name_fb);
   }
 
-  void initializeFirebase() async {
-    await Firebase.initializeApp();
-    final firebaseApp = Firebase.app();
-    rtdb = FirebaseDatabase.instanceFor(
-        app: firebaseApp,
-        databaseURL:
-            'https://projectjop-86653-default-rtdb.asia-southeast1.firebasedatabase.app/');
-    print("Firebase initialized");
-    // ทำอย่างอื่นที่ต้องการเมื่อ Firebase ถูกเริ่มต้น
-    DatabaseReference ref = FirebaseDatabase.instance.ref("credit_balance");
-    // DatabaseEvent event = await ref.once();
-    // print(event.snapshot.value);
-    Stream<DatabaseEvent> stream = ref.onValue;
-    // print(event.snapshot.value);
-// Subscribe to the stream!
-    stream.listen((DatabaseEvent event) {
-      print('Event Type: ${event.type}'); // DatabaseEventType.value;
-      print('Snapshot: ${event.snapshot.value}'); // DataSnapshot
-
-      if (x == 0) {
-        f_data = (event.snapshot.value).toString();
-        x++;
-      }
-      setState(() {
-        ph = (event.snapshot.value).toString();
-        if (int.parse(ph!) == 0) {
-          time_out();
-        }
-      });
-      print(f_data);
+  getUser() async {
+    prefs = await SharedPreferences.getInstance();
+    setState(() {
+      emailname = prefs.getString('username')!;
     });
   }
 
-  docheck(String ctl) async {
+  void initializeFirebase() async {
+    // await Firebase.initializeApp();
+    // final firebaseApp = Firebase.app();
+    // rtdb = FirebaseDatabase.instanceFor(
+    //     app: firebaseApp,
+    //     databaseURL:
+    //         'https://projectjop-86653-default-rtdb.asia-southeast1.firebasedatabase.app/');
+    // print("Firebase initialized");
     try {
-      var rs = await apiProvider.controller_box(ctl);
-      if (rs.statusCode == 200) {
-        // แปลงเป็น json
-        print(json.decode(rs.body));
-        var jsonResponse = await json.decode(rs.body);
-        // print(jsonResponse['data'][0]['name']);
-        if (jsonResponse['ok'] == true) {
-          print("oh");
-          // pushReplacement ไม่ให้สามารถย้อนกลับมาได้
-          // เก็บค่าข้อมุล
-          // setStringname(jsonResponse['data'][0]['name']);
-          // SharedPreferences prefs = await SharedPreferences.getInstance();
-          // prefs.setString(
-          //     'username', (jsonResponse['data'][0]['username'].toString()));
-          // Navigator.pushReplacement(
-          //     context, MaterialPageRoute(builder: (context) => Home_menu()));
-          // ignore: use_build_context_synchronously
-          showDialog<String>(
-            context: context,
-            builder: (BuildContext context) => AlertDialog(
-              title: const Text('เริ่มการทำงาน'),
-              // content: const Text('AlertDialog description'),
-              actions: <Widget>[
-                TextButton(
-                  onPressed: () => Navigator.push(
-                      context,
-                      // App_test
-                      MaterialPageRoute(builder: (context) => App_test())),
-                  child: const Text('OK'),
-                ),
-              ],
-            ),
+      WidgetsFlutterBinding.ensureInitialized();
+      await Firebase.initializeApp(
+          // options: DefaultFirebaseOptions.currentPlatform,
           );
-        } else {
-          // ยังทำไม่ได้
-          // print('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
-          // ignore: use_build_context_synchronously
-          showDialog<String>(
-            context: context,
-            builder: (BuildContext context) => AlertDialog(
-              title: const Text('ข้อมูลไม่ถูกต้อง'),
-              // content: const Text('AlertDialog description'),
-              actions: <Widget>[
-                TextButton(
-                  onPressed: () => Navigator.pop(context, 'OK'),
-                  child: const Text('OK'),
-                ),
-              ],
-            ),
-          );
+      // ทำอย่างอื่นที่ต้องการเมื่อ Firebase ถูกเริ่มต้น
+      DatabaseReference ref = FirebaseDatabase.instance.ref(name_fb);
+//     // DatabaseEvent event = await ref.once();
+//     // print(event.snapshot.value);
+      Stream<DatabaseEvent> stream = ref.onValue;
+//     print("asasasasa");
+// // Subscribe to the stream!
+      stream.listen((DatabaseEvent event) {
+        print('Event Type: ${event.type}'); // DatabaseEventType.value;
+        print('Snapshot: ${event.snapshot.value}'); // DataSnapshot
+
+        if (x == 0) {
+          // f_data = (event.snapshot.value).toString();
+          try {
+            credit_start = int.parse(event.snapshot.value
+                .toString()); // Parsing integer safely with toString()
+            x++;
+          } catch (e) {
+            print('Error parsing integer: $e');
+            // Handle the error or set a default value for credit_start
+          }
+          x++;
         }
-        // if(jsonResponse.length)
+        setState(() {
+          credit_show = int.parse(event.snapshot.value.toString());
+          print(check_send_data);
+          if (credit_show == 0) {
+            check_send_data += 1;
+            print("heelolll");
+            docheck_success();
+          }
+          // var value = credit_show;
+          // if (id_promotion_now != 0) {
+          //   credit_show = credit_show! + credit_promotion_now!;
+          // }
+        });
+
+        // print(f_data);
+      });
+
+// working_now
+      DatabaseReference ref_controller =
+          FirebaseDatabase.instance.ref('/box$id_carname_now/working_now');
+      Stream<DatabaseEvent> stream_controller = ref_controller.onValue;
+      stream_controller.listen((DatabaseEvent event) {
+        print('Event Type: ${event.type}'); // DatabaseEventType.value;
+        print('Snapshot: ${event.snapshot.value}'); // DataSnapshot
+
+        if (x_controller == 0) {
+          // f_data = (event.snapshot.value).toString();
+          try {
+            type = event.snapshot.value
+                .toString(); // Parsing integer safely with toString()
+            x_controller++;
+          } catch (e) {
+            print('Error parsing integer: $e');
+            // Handle the error or set a default value for credit_start
+          }
+          x_controller++;
+        }
+        setState(() {
+          type = event.snapshot.value.toString();
+        });
+
+        // print(f_data);
+      });
+
+      // DatabaseReference ref_controller_check =
+      //     FirebaseDatabase.instance.ref('/box$id_carname_now/error_state');
+      // Stream<DatabaseEvent> stream_controller_check =
+      //     ref_controller_check.onValue;
+      // stream_controller_check.listen((DatabaseEvent event_check) {
+      //   print('Event Type: ${event_check.type}'); // DatabaseEventType.value;
+      //   print('Snapshot: ${event_check.snapshot.value}'); // DataSnapshot
+
+      //   if (event_check.snapshot.value == 1) {
+      //     // f_data = (event.snapshot.value).toString();
+      //     print("helloworld");
+      //     docheck_success();
+      //   }
+      //   // print(f_data);
+      // });
+    } catch (e) {
+      print("Error initializing Firebase: $e");
+    }
+  }
+
+  docheck_success() async {
+    try {
+      // setState(() {
+      //   check_send_data += 1;
+      // });
+      print("check_send_data => $check_send_data");
+      var price = credit_start! - credit_show!;
+      if (credit_show >= credit_promotion_now! && id_promotion_now != 0) {
+        print("dsdsdssasasa555");
+        price -= credit_promotion_now!;
+      }
+      if (price > 0) {
+        var rs = await apiProvider.send_use_carwash(
+            emailname.toString(),
+            price.toString(),
+            id_promotion_now.toString(),
+            id_carname_now.toString(),
+            credit_show.toString(),
+            check_send_data);
+        if (rs.statusCode == 200) {
+          // แปลงเป็น json
+          print(json.decode(rs.body));
+          var jsonResponse = await json.decode(rs.body);
+          // print(jsonResponse['data'][0]['name']);
+          if (jsonResponse['ok'] == true) {
+            print("oh");
+            // setState(() {
+            //   check_send_data = 0;
+            // });
+            showDialog<String>(
+              context: context,
+              builder: (BuildContext context) => AlertDialog(
+                title: const Text('ขอบคุณทีใช้บริการครับ'),
+                // content: const Text('AlertDialog description'),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () =>
+                        // {Navigator.of(context).pop()},
+                        Navigator.push(
+                            context,
+                            // App_test
+                            MaterialPageRoute(
+                                builder: (context) => Home_menu())),
+                    child: const Text('OK'),
+                  ),
+                ],
+              ),
+            );
+          } else {
+            // ยังทำไม่ได้
+            // print('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+            // ignore: use_build_context_synchronously
+            showDialog<String>(
+              context: context,
+              builder: (BuildContext context) => AlertDialog(
+                title: const Text('ข้อมูลไม่ถูกต้อง'),
+                // content: const Text('AlertDialog description'),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, 'OK'),
+                    child: const Text('OK'),
+                  ),
+                ],
+              ),
+            );
+          }
+          // if(jsonResponse.length)
+        } else {
+          print("Server Error");
+        }
       } else {
-        print("Server Error");
+        var rs = await apiProvider.end_use_carwash(
+            id_carname_now.toString(), check_send_data);
+        if (rs.statusCode == 200) {
+          // แปลงเป็น json
+          print(json.decode(rs.body));
+          var jsonResponse = await json.decode(rs.body);
+          // print(jsonResponse['data'][0]['name']);
+          if (jsonResponse['ok'] == true) {
+            print("oh");
+            // setState(() {
+            //   check_send_data = 0;
+            // });
+            showDialog<String>(
+              context: context,
+              builder: (BuildContext context) => AlertDialog(
+                title: const Text('ขอบคุณทีใช้บริการครับ'),
+                // content: const Text('AlertDialog description'),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () =>
+                        // {Navigator.of(context).pop()},
+                        Navigator.push(
+                            context,
+                            // App_test
+                            MaterialPageRoute(
+                                builder: (context) => Home_menu())),
+                    child: const Text('OK'),
+                  ),
+                ],
+              ),
+            );
+          } else {
+            // ยังทำไม่ได้
+            // print('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+            // ignore: use_build_context_synchronously
+            showDialog<String>(
+              context: context,
+              builder: (BuildContext context) => AlertDialog(
+                title: const Text('ข้อมูลไม่ถูกต้อง'),
+                // content: const Text('AlertDialog description'),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, 'OK'),
+                    child: const Text('OK'),
+                  ),
+                ],
+              ),
+            );
+          }
+        }
       }
     } catch (error) {
       print(error);
     }
   }
 
-  void time_out() {
-    showDialog<String>(
-      context: context,
-      builder: (BuildContext context) => AlertDialog(
-        // title: const Text('ส่งคำตอบ'),
-        content: Container(
-          width: 180,
-          height: 250,
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 100,
-                    height: 150,
-                    child: Image.asset('images/money.png'),
+  docheck(String ctl) async {
+    try {
+      if (ctl == type) {
+        var rs =
+            await apiProvider.controller_box("0", id_carname_now.toString());
+        if (rs.statusCode == 200) {
+          // แปลงเป็น json
+          print(json.decode(rs.body));
+          var jsonResponse = await json.decode(rs.body);
+          // print(jsonResponse['data'][0]['name']);
+          if (jsonResponse['ok'] == true) {
+            print("oh");
+            // pushReplacement ไม่ให้สามารถย้อนกลับมาได้
+            // เก็บค่าข้อมุล
+            // setStringname(jsonResponse['data'][0]['name']);
+            // SharedPreferences prefs = await SharedPreferences.getInstance();
+            // prefs.setString(
+            //     'username', (jsonResponse['data'][0]['username'].toString()));
+            // Navigator.pushReplacement(
+            //     context, MaterialPageRoute(builder: (context) => Home_menu()));
+            // ignore: use_build_context_synchronously
+            showDialog<String>(
+              context: context,
+              builder: (BuildContext context) => AlertDialog(
+                title: const Text('หยุดการทำงาน'),
+                // content: const Text('AlertDialog description'),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () => {Navigator.of(context).pop()},
+                    // Navigator.push(
+                    //     context,
+                    //     // App_test
+                    //     MaterialPageRoute(
+                    //         builder: (context) => App_test(
+                    //             credit: credit_now, id_carname: id_carname_now))),
+                    child: const Text('OK'),
                   ),
                 ],
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text("หมดเวลา",
-                      style: TextStyle(fontSize: 22, fontFamily: 'Kodchasan'))
+            );
+          } else {
+            // ยังทำไม่ได้
+            // print('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+            // ignore: use_build_context_synchronously
+            showDialog<String>(
+              context: context,
+              builder: (BuildContext context) => AlertDialog(
+                title: const Text('ข้อมูลไม่ถูกต้อง'),
+                // content: const Text('AlertDialog description'),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, 'OK'),
+                    child: const Text('OK'),
+                  ),
                 ],
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(0, 20, 0, 0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    TextButton(
-                      // Home_menu
-                      onPressed: () => {
-                        // Navigator.of(context).pop()
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                //  QrCodeGenerator payment_money
-                                // builder: (context) => QrCodeGenerator(
-                                //       qrData: '1',
-                                //     )));
-                                builder: (context) => Home_menu()))
-                      },
-                      style: TextButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                      ),
-                      child: Container(
+            );
+          }
+          // if(jsonResponse.length)
+        } else {
+          print("Server Error");
+        }
+      } else {
+        var rs =
+            await apiProvider.controller_box(ctl, id_carname_now.toString());
+        if (rs.statusCode == 200) {
+          // แปลงเป็น json
+          print(json.decode(rs.body));
+          var jsonResponse = await json.decode(rs.body);
+          // print(jsonResponse['data'][0]['name']);
+          if (jsonResponse['ok'] == true) {
+            print("oh");
+            // pushReplacement ไม่ให้สามารถย้อนกลับมาได้
+            // เก็บค่าข้อมุล
+            // setStringname(jsonResponse['data'][0]['name']);
+            // SharedPreferences prefs = await SharedPreferences.getInstance();
+            // prefs.setString(
+            //     'username', (jsonResponse['data'][0]['username'].toString()));
+            // Navigator.pushReplacement(
+            //     context, MaterialPageRoute(builder: (context) => Home_menu()));
+            // ignore: use_build_context_synchronously
+            showDialog<String>(
+              context: context,
+              builder: (BuildContext context) => AlertDialog(
+                title: const Text('เริ่มการทำงาน'),
+                // content: const Text('AlertDialog description'),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () => {Navigator.of(context).pop()},
+                    // Navigator.push(
+                    //     context,
+                    //     // App_test
+                    //     MaterialPageRoute(
+                    //         builder: (context) => App_test(
+                    //             credit: credit_now, id_carname: id_carname_now))),
+                    child: const Text('OK'),
+                  ),
+                ],
+              ),
+            );
+          } else {
+            // ยังทำไม่ได้
+            // print('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+            // ignore: use_build_context_synchronously
+            showDialog<String>(
+              context: context,
+              builder: (BuildContext context) => AlertDialog(
+                title: const Text('ข้อมูลไม่ถูกต้อง'),
+                // content: const Text('AlertDialog description'),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, 'OK'),
+                    child: const Text('OK'),
+                  ),
+                ],
+              ),
+            );
+          }
+          // if(jsonResponse.length)
+        } else {
+          print("Server Error");
+        }
+      }
+    } catch (error) {
+      print(error);
+    }
+  }
+
+  void status_error() async {
+    var rs = await apiProvider.controller_box_error(id_carname_now.toString());
+    if (rs.statusCode == 200) {
+      // แปลงเป็น json
+      print(json.decode(rs.body));
+      var jsonResponse = await json.decode(rs.body);
+      // print(jsonResponse['data'][0]['name']);
+      if (jsonResponse['ok'] == true) {
+        showDialog<String>(
+          context: context,
+          builder: (BuildContext context) => AlertDialog(
+            // title: const Text('ส่งคำตอบ'),
+            content: Container(
+              width: 180,
+              height: 250,
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
                         width: 100,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(15),
-                          color: Colors.blue,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Color(0x3f000000),
-                              offset: Offset(0, 5),
-                              blurRadius: 5,
-                            ),
-                          ],
-                        ),
-                        child: Center(
-                          child: Text('ยืนยัน',
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 22,
-                                  fontFamily: 'Kodchasan')),
-                        ),
+                        height: 150,
+                        child: Image.asset('images/money.png'),
                       ),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text("ตู้ไม่พร้อมใช้งาน",
+                          style:
+                              TextStyle(fontSize: 22, fontFamily: 'Kodchasan'))
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text("กรุณาแจ้งเจ้าหน้าที่",
+                          style:
+                              TextStyle(fontSize: 22, fontFamily: 'Kodchasan'))
+                    ],
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(0, 20, 0, 0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        TextButton(
+                          // Home_menu
+                          onPressed: () => {
+                            // Navigator.of(context).pop()
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    //  QrCodeGenerator payment_money
+                                    // builder: (context) => QrCodeGenerator(
+                                    //       qrData: '1',
+                                    //     )));
+                                    builder: (context) => Home_menu()))
+                          },
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                          ),
+                          child: Container(
+                            width: 100,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(15),
+                              color: Colors.blue,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Color(0x3f000000),
+                                  offset: Offset(0, 5),
+                                  blurRadius: 5,
+                                ),
+                              ],
+                            ),
+                            child: Center(
+                              child: Text('ยืนยัน',
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 22,
+                                      fontFamily: 'Kodchasan')),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
+              ),
+            ),
+            // title: const Text('เหลือเวลาทำข้อสอบอีก 5 นาที'),
+            // content: const Text('AlertDialog description'),
+          ),
+        );
+      } else {
+        // ยังทำไม่ได้
+        // print('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+        // ignore: use_build_context_synchronously
+        showDialog<String>(
+          context: context,
+          builder: (BuildContext context) => AlertDialog(
+            title: const Text('ข้อมูลไม่ถูกต้อง'),
+            // content: const Text('AlertDialog description'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.pop(context, 'OK'),
+                child: const Text('OK'),
               ),
             ],
           ),
-        ),
-        // title: const Text('เหลือเวลาทำข้อสอบอีก 5 นาที'),
-        // content: const Text('AlertDialog description'),
-      ),
-    );
+        );
+      }
+      // if(jsonResponse.length)
+    } else {
+      print("Server Error");
+    }
   }
 
   void exit_question() {
@@ -241,11 +588,14 @@ class _App_testState extends State<App_test> {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     TextButton(
-                      onPressed: () => {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => Home_menu()))
+                      onPressed: () {
+                        setState(() {
+                          check_send_data += 1;
+                        });
+
+                        if (check_send_data == 1) {
+                          docheck_success();
+                        }
                       },
                       style: TextButton.styleFrom(
                         padding: EdgeInsets.zero,
@@ -274,7 +624,12 @@ class _App_testState extends State<App_test> {
                       ),
                     ),
                     TextButton(
-                      onPressed: () => {Navigator.of(context).pop()},
+                      onPressed: () {
+                        setState(() {
+                          check_send_data = 0;
+                        });
+                        Navigator.of(context).pop();
+                      },
                       style: TextButton.styleFrom(
                         padding: EdgeInsets.zero,
                       ),
@@ -315,6 +670,12 @@ class _App_testState extends State<App_test> {
 
   @override
   Widget build(BuildContext context) {
+    if (credit_start == null) {
+      // Return a loading or error state
+      return Center(
+          child:
+              CircularProgressIndicator()); // Replace with your desired widget.
+    }
     return WillPopScope(
         onWillPop: () async {
           // ระบุว่าคุณไม่ต้องการให้ Dialog ปิดลงเมื่อผู้ใช้กดปุ่ม "ย้อนกลับ"
@@ -332,6 +693,13 @@ class _App_testState extends State<App_test> {
               child: Column(
                 // mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  // SafeArea(
+                  //     child: FirebaseAnimatedList(
+                  //         query: refQ,
+                  //         itemBuilder: (context, snapshot, animation, index) {
+                  //           String userString = snapshot.value as String;
+                  //           return Text(userString);
+                  //         })),
                   Container(
                     width: 300,
                     height: 100,
@@ -349,7 +717,7 @@ class _App_testState extends State<App_test> {
                     ),
                     child: Center(
                       child: Text(
-                        '${ph} ',
+                        '${credit_show} ',
                         style: TextStyle(
                           fontSize: 36,
                           fontFamily: 'Kodchasan',
@@ -365,15 +733,15 @@ class _App_testState extends State<App_test> {
                     children: [
                       InkWell(
                         onTap: () {
-                          docheck("water");
+                          docheck("1");
 
                           // Color backgroundColor = Colors.white;
                           // ใส่โค้ดที่คุณต้องการให้ทำงานเมื่อปุ่มถูกแตะ
                           setState(() {
-                            if (type == "water") {
+                            if (type == "1") {
                               type = "";
                             } else {
-                              type = "water";
+                              type = "1";
                             }
                           });
 
@@ -384,7 +752,7 @@ class _App_testState extends State<App_test> {
                           width: 150, // ขนาดของปุ่มวงกลม
                           height: 150,
                           decoration: BoxDecoration(
-                            color: type == "water" ? Colors.blue : Colors.white,
+                            color: type == "1" ? Colors.blue : Colors.white,
                             shape: BoxShape.circle,
                             border: Border.all(color: Colors.blue, width: 2),
                             boxShadow: [
@@ -400,9 +768,7 @@ class _App_testState extends State<App_test> {
                             child: Text(
                               "น้ำ",
                               style: TextStyle(
-                                color: type == "water"
-                                    ? Colors.white
-                                    : Colors.blue,
+                                color: type == "1" ? Colors.white : Colors.blue,
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -413,12 +779,12 @@ class _App_testState extends State<App_test> {
                       SizedBox(width: 20), // ระยะห่างระหว่างปุ่ม
                       InkWell(
                         onTap: () {
-                          docheck("foam");
+                          docheck("2");
                           setState(() {
-                            if (type == "foam") {
+                            if (type == "2") {
                               type = "";
                             } else {
-                              type = "foam";
+                              type = "2";
                             }
                           });
                           // ใส่โค้ดที่คุณต้องการให้ทำงานเมื่อปุ่มถูกแตะ
@@ -428,7 +794,7 @@ class _App_testState extends State<App_test> {
                           width: 150, // ขนาดของปุ่มวงกลม
                           height: 150,
                           decoration: BoxDecoration(
-                            color: type == "foam" ? Colors.blue : Colors.white,
+                            color: type == "2" ? Colors.blue : Colors.white,
                             shape: BoxShape.circle,
                             border: Border.all(color: Colors.blue, width: 2),
                             boxShadow: [
@@ -444,8 +810,7 @@ class _App_testState extends State<App_test> {
                             child: Text(
                               "โฟม",
                               style: TextStyle(
-                                color:
-                                    type == "foam" ? Colors.white : Colors.blue,
+                                color: type == "2" ? Colors.white : Colors.blue,
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -458,12 +823,12 @@ class _App_testState extends State<App_test> {
                   SizedBox(height: 20), // ระยะห่างระหว่างปุ่ม
                   InkWell(
                     onTap: () {
-                      docheck("wind");
+                      docheck("3");
                       setState(() {
-                        if (type == "wind") {
+                        if (type == "3") {
                           type = "";
                         } else {
-                          type = "wind";
+                          type = "3";
                         }
                       });
                       // ใส่โค้ดที่คุณต้องการให้ทำงานเมื่อปุ่มถูกแตะ
@@ -473,7 +838,7 @@ class _App_testState extends State<App_test> {
                       width: 150, // ขนาดของปุ่มวงกลม
                       height: 150,
                       decoration: BoxDecoration(
-                        color: type == "wind" ? Colors.blue : Colors.white,
+                        color: type == "3" ? Colors.blue : Colors.white,
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.blue, width: 2),
                         boxShadow: [
@@ -489,7 +854,7 @@ class _App_testState extends State<App_test> {
                         child: Text(
                           "ลม",
                           style: TextStyle(
-                            color: type == "wind" ? Colors.white : Colors.blue,
+                            color: type == "3" ? Colors.white : Colors.blue,
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
@@ -519,6 +884,10 @@ class _App_testState extends State<App_test> {
                             elevation: 10,
                           ),
                           onPressed: () {
+                            setState(() {
+                              check_send_data += 1;
+                            });
+                            docheck_success();
                             // docheck();
                           },
                         )),
