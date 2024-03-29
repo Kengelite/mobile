@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:finalproject/payment/payment.dart';
 import 'package:finalproject/show_timeuse.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
@@ -28,6 +29,7 @@ class _choise_menuState extends State<choise_menu> {
   ApiProvider apiProvider = ApiProvider();
   String? emailname;
   double? money;
+
   TextEditingController _ctrlPrice = TextEditingController();
   FocusNode _focusNode = FocusNode();
   final _formKey = GlobalKey<FormState>();
@@ -42,9 +44,9 @@ class _choise_menuState extends State<choise_menu> {
   @override
   void initState() {
     super.initState();
-    // scanQrCode();
+     scanQrCode();
     getUser();
-    data_promotion("washcar1");
+    // data_promotion("washcar1");
     print(id_promotion);
   }
 
@@ -272,7 +274,39 @@ class _choise_menuState extends State<choise_menu> {
           // ยังทำไม่ได้
           // print('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
           // ignore: use_build_context_synchronously
-          Future.delayed(Duration.zero, () {
+          if (jsonResponse['txt'] == "money") {
+            showDialog<String>(
+              context: context,
+              builder: (BuildContext context) => AlertDialog(
+                title: const Text('ยอดเงินไม่เพียงพอ \nกรุณาเติมเงิน'),
+                // content: const Text('AlertDialog description'),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            //  QrCodeGenerator payment_money
+                            // builder: (context) => QrCodeGenerator(
+                            //       qrData: '1',
+                            //     )));
+                            builder: (context) => Home_menu())),
+                    child: const Text('ยืนยัน'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            //  QrCodeGenerator payment_money
+                            // builder: (context) => QrCodeGenerator(
+                            //       qrData: '1',
+                            //     )));
+                            builder: (context) => payment_money())),
+                    child: const Text('เติมเงิน'),
+                  ),
+                ],
+              ),
+            );
+          } else {
             showDialog<String>(
               context: context,
               builder: (BuildContext context) => AlertDialog(
@@ -280,13 +314,20 @@ class _choise_menuState extends State<choise_menu> {
                 // content: const Text('AlertDialog description'),
                 actions: <Widget>[
                   TextButton(
-                    onPressed: () => Navigator.pop(context, 'OK'),
-                    child: const Text('OK'),
+                    onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            //  QrCodeGenerator payment_money
+                            // builder: (context) => QrCodeGenerator(
+                            //       qrData: '1',
+                            //     )));
+                            builder: (context) => Home_menu())),
+                    child: const Text('ยืนยัน'),
                   ),
                 ],
               ),
             );
-          });
+          }
         }
         // if(jsonResponse.length)
       } else {
@@ -295,31 +336,6 @@ class _choise_menuState extends State<choise_menu> {
     } catch (error) {
       print(error);
     }
-
-    // showDialog<String>(
-    //   context: context,
-    //   builder: (BuildContext context) => AlertDialog(
-    //     title: const Text('ยอดเงินไม่เพียงพอ \nกรุณาเติมเงิน'),
-    //     // content: const Text('AlertDialog description'),
-    //     actions: <Widget>[
-    //       TextButton(
-    //         onPressed: () => Navigator.pop(context, 'ยืนยัน'),
-    //         child: const Text('ยืนยัน'),
-    //       ),
-    //       TextButton(
-    //         onPressed: () => Navigator.push(
-    //             context,
-    //             MaterialPageRoute(
-    //                 //  QrCodeGenerator payment_money
-    //                 // builder: (context) => QrCodeGenerator(
-    //                 //       qrData: '1',
-    //                 //     )));
-    //                 builder: (context) => payment_money())),
-    //         child: const Text('เติมเงิน'),
-    //       ),
-    //     ],
-    //   ),
-    // );
   }
 
   Widget map_api(String name, String type_name, String price, String id) {

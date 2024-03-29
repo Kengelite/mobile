@@ -37,6 +37,7 @@ class _App_testState extends State<App_test> {
   int credit_show = 0;
   String type = "";
   String? f_data;
+  double? credit_dev;
   late SharedPreferences prefs;
   String? emailname;
   double? credit_now;
@@ -49,7 +50,13 @@ class _App_testState extends State<App_test> {
   String? name_fb;
   int check_send_data = 0;
   int? credit_start;
+  int? credit_water;
+  int? credit_foam;
+  int? credit_wind;
+  int? credit_lastcredit;
   int credit_show_old = 0;
+  int state_open = 0;
+  int check_send_now = 0;
   DatabaseReference? _databaseReference;
   // Query refQ = FirebaseDatabase.instance.ref().child("box1");
   @override
@@ -73,6 +80,7 @@ class _App_testState extends State<App_test> {
     prefs = await SharedPreferences.getInstance();
     setState(() {
       emailname = prefs.getString('username')!;
+      credit_dev = double.parse(prefs.getString('credit_dev')!);
     });
   }
 
@@ -89,12 +97,29 @@ class _App_testState extends State<App_test> {
       await Firebase.initializeApp(
           // options: DefaultFirebaseOptions.currentPlatform,
           );
+
+      DatabaseReference ref_controller_check =
+          FirebaseDatabase.instance.ref('/box$id_carname_now/error_state');
+      Stream<DatabaseEvent> stream_controller_check =
+          ref_controller_check.onValue;
+      stream_controller_check.listen((DatabaseEvent event_check) async {
+        print('Event Type: ${event_check.type}'); // DatabaseEventType.value;
+        print('Snapshot: ${event_check.snapshot.value}'); // DataSnapshot
+
+        if (event_check.snapshot.value == 1) {
+          // f_data = (event.snapshot.value).toString();
+          print("helloworld");
+          await docheck_success_last();
+        }
+        // print(f_data);
+      });
+
       // ทำอย่างอื่นที่ต้องการเมื่อ Firebase ถูกเริ่มต้น
       DatabaseReference ref = FirebaseDatabase.instance.ref(name_fb);
 //     // DatabaseEvent event = await ref.once();
 //     // print(event.snapshot.value);
       Stream<DatabaseEvent> stream = ref.onValue;
-//     print("asasasasa");
+      print("asasasasa");
 // // Subscribe to the stream!
       stream.listen((DatabaseEvent event) {
         print('Event Type: ${event.type}'); // DatabaseEventType.value;
@@ -118,7 +143,9 @@ class _App_testState extends State<App_test> {
           if (credit_show == 0) {
             check_send_data += 1;
             print("heelolll");
-            docheck_success();
+            if (check_send_now == 0) {
+              docheck_success();
+            }
           }
           // var value = credit_show;
           // if (id_promotion_now != 0) {
@@ -156,23 +183,163 @@ class _App_testState extends State<App_test> {
         // print(f_data);
       });
 
-      // DatabaseReference ref_controller_check =
-      //     FirebaseDatabase.instance.ref('/box$id_carname_now/error_state');
-      // Stream<DatabaseEvent> stream_controller_check =
-      //     ref_controller_check.onValue;
-      // stream_controller_check.listen((DatabaseEvent event_check) {
-      //   print('Event Type: ${event_check.type}'); // DatabaseEventType.value;
-      //   print('Snapshot: ${event_check.snapshot.value}'); // DataSnapshot
+      DatabaseReference ref_controller_water =
+          FirebaseDatabase.instance.ref('/credit_water');
+      Stream<DatabaseEvent> stream_controller_water =
+          ref_controller_water.onValue;
+      stream_controller_water.listen((DatabaseEvent event_water) {
+        print('Event Type: ${event_water.type}'); // DatabaseEventType.value;
+        print('Snapshot: ${event_water.snapshot.value}'); // DataSnapshot
+        credit_water = int.parse(event_water.snapshot.value.toString());
 
-      //   if (event_check.snapshot.value == 1) {
-      //     // f_data = (event.snapshot.value).toString();
-      //     print("helloworld");
-      //     docheck_success();
-      //   }
-      //   // print(f_data);
-      // });
+        // print(f_data);
+      });
+
+      DatabaseReference ref_controller_foam =
+          FirebaseDatabase.instance.ref('/credit_foam');
+      Stream<DatabaseEvent> stream_controller_foam =
+          ref_controller_foam.onValue;
+      stream_controller_foam.listen((DatabaseEvent event_foam) {
+        print('Event Type: ${event_foam.type}'); // DatabaseEventType.value;
+        print('Snapshot: ${event_foam.snapshot.value}'); // DataSnapshot
+        credit_foam = int.parse(event_foam.snapshot.value.toString());
+
+        // print(f_data);
+      });
+
+      DatabaseReference ref_controller_wind =
+          FirebaseDatabase.instance.ref('/credit_wind');
+      Stream<DatabaseEvent> stream_controller_wind =
+          ref_controller_wind.onValue;
+      stream_controller_wind.listen((DatabaseEvent event_wind) {
+        print('Event Type: ${event_wind.type}'); // DatabaseEventType.value;
+        print('Snapshot: ${event_wind.snapshot.value}'); // DataSnapshot
+        credit_wind = int.parse(event_wind.snapshot.value.toString());
+
+        // print(f_data);
+      });
+
+      DatabaseReference ref_controller_lastcredit =
+          FirebaseDatabase.instance.ref('/box$id_carname_now/last_credit');
+      Stream<DatabaseEvent> stream_controller_lastcredit =
+          ref_controller_lastcredit.onValue;
+      stream_controller_lastcredit.listen((DatabaseEvent event_lastcredit) {
+        print(
+            'Event Type: ${event_lastcredit.type}'); // DatabaseEventType.value;
+        print('Snapshot: ${event_lastcredit.snapshot.value}'); // DataSnapshot
+        credit_lastcredit =
+            int.parse(event_lastcredit.snapshot.value.toString());
+
+        // print(f_data);
+      });
     } catch (e) {
       print("Error initializing Firebase: $e");
+    }
+  }
+
+  docheck_success_last() async {
+    try {
+      setState(() {
+        check_send_now = 1;
+      });
+
+      print("check_send_data5555 => $credit_lastcredit");
+      var price = credit_start! - credit_lastcredit!;
+      if (id_promotion_now != 0) {
+        print("dsdsdssasasa555");
+        price -= credit_promotion_now!;
+      }
+      print("credit_start = >>> " + credit_start.toString());
+      print("price = >>> " + price.toString());
+      if (price > 0) {
+        print("price = >>>ss ");
+        var rs = await apiProvider.send_use_carwash(
+            emailname.toString(),
+            price.toString(),
+            id_promotion_now.toString(),
+            id_carname_now.toString(),
+            credit_show.toString(),
+            1);
+        if (rs.statusCode == 200) {
+          // แปลงเป็น json
+          print(json.decode(rs.body));
+          var jsonResponse = await json.decode(rs.body);
+          // print(jsonResponse['data'][0]['name']);
+          if (jsonResponse['ok'] == true) {
+            print("oh");
+            // setState(() {
+            //   check_send_data = 0;
+            // });
+            var rs = await apiProvider.end_use_carwash(
+              emailname.toString(),
+              id_carname_now.toString(),
+              2,
+              id_promotion_now.toString(),
+            );
+            showDialog<String>(
+              context: context,
+              builder: (BuildContext context) => AlertDialog(
+                title: const Text('ขอบคุณทีใช้บริการครับ'),
+                // content: const Text('AlertDialog description'),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () =>
+                        // {Navigator.of(context).pop()},
+                        Navigator.push(
+                            context,
+                            // App_test
+                            MaterialPageRoute(
+                                builder: (context) => Home_menu())),
+                    child: const Text('OK'),
+                  ),
+                ],
+              ),
+            );
+          } else {
+            // ยังทำไม่ได้
+            // print('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+            // ignore: use_build_context_synchronously
+            showDialog<String>(
+              context: context,
+              builder: (BuildContext context) => AlertDialog(
+                title: const Text('ข้อมูลไม่ถูกต้อง'),
+                // content: const Text('AlertDialog description'),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, 'OK'),
+                    child: const Text('OK'),
+                  ),
+                ],
+              ),
+            );
+          }
+          // if(jsonResponse.length)
+        } else {
+          print("Server Error");
+        }
+      } else {
+        print("Server Errorsasasa");
+        showDialog<String>(
+          context: context,
+          builder: (BuildContext context) => AlertDialog(
+            title: const Text('ขอบคุณทีใช้บริการครับ'),
+            // content: const Text('AlertDialog description'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () =>
+                    // {Navigator.of(context).pop()},
+                    Navigator.push(
+                        context,
+                        // App_test
+                        MaterialPageRoute(builder: (context) => Home_menu())),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (error) {
+      print(error);
     }
   }
 
@@ -181,13 +348,27 @@ class _App_testState extends State<App_test> {
       // setState(() {
       //   check_send_data += 1;
       // });
+      DatabaseReference ref_controller_lastcredit =
+          FirebaseDatabase.instance.ref('/credit_lastcredit');
+      Stream<DatabaseEvent> stream_controller_lastcredit =
+          ref_controller_lastcredit.onValue;
+      stream_controller_lastcredit.listen((DatabaseEvent event_lastcredit) {
+        print(
+            'Event Type: ${event_lastcredit.type}'); // DatabaseEventType.value;
+        print('Snapshot: ${event_lastcredit.snapshot.value}'); // DataSnapshot
+        credit_lastcredit =
+            int.parse(event_lastcredit.snapshot.value.toString());
+
+        // print(f_data);
+      });
       print("check_send_data => $check_send_data");
       var price = credit_start! - credit_show!;
-      if (credit_show >= credit_promotion_now! && id_promotion_now != 0) {
+      if (id_promotion_now != 0) {
         print("dsdsdssasasa555");
         price -= credit_promotion_now!;
       }
       if (price > 0) {
+        print("dsdsdsdsdsdsdsdsds");
         var rs = await apiProvider.send_use_carwash(
             emailname.toString(),
             price.toString(),
@@ -205,6 +386,12 @@ class _App_testState extends State<App_test> {
             // setState(() {
             //   check_send_data = 0;
             // });
+            var rs = await apiProvider.end_use_carwash(
+              emailname.toString(),
+              id_carname_now.toString(),
+              2,
+              id_promotion_now.toString(),
+            );
             showDialog<String>(
               context: context,
               builder: (BuildContext context) => AlertDialog(
@@ -248,7 +435,11 @@ class _App_testState extends State<App_test> {
         }
       } else {
         var rs = await apiProvider.end_use_carwash(
-            id_carname_now.toString(), check_send_data);
+          emailname.toString(),
+          id_carname_now.toString(),
+          check_send_data,
+          id_promotion_now.toString(),
+        );
         if (rs.statusCode == 200) {
           // แปลงเป็น json
           print(json.decode(rs.body));
@@ -259,6 +450,12 @@ class _App_testState extends State<App_test> {
             // setState(() {
             //   check_send_data = 0;
             // });
+            var rs = await apiProvider.end_use_carwash(
+              emailname.toString(),
+              id_carname_now.toString(),
+              2,
+              id_promotion_now.toString(),
+            );
             showDialog<String>(
               context: context,
               builder: (BuildContext context) => AlertDialog(
@@ -305,7 +502,7 @@ class _App_testState extends State<App_test> {
 
   docheck(String ctl) async {
     try {
-      if (ctl == type) {
+      if (ctl == type && state_open == 1) {
         var rs =
             await apiProvider.controller_box("0", id_carname_now.toString());
         if (rs.statusCode == 200) {
@@ -315,6 +512,10 @@ class _App_testState extends State<App_test> {
           // print(jsonResponse['data'][0]['name']);
           if (jsonResponse['ok'] == true) {
             print("oh");
+            setState(() {
+              state_open = 0;
+              type = "";
+            });
             // pushReplacement ไม่ให้สามารถย้อนกลับมาได้
             // เก็บค่าข้อมุล
             // setStringname(jsonResponse['data'][0]['name']);
@@ -365,7 +566,7 @@ class _App_testState extends State<App_test> {
         } else {
           print("Server Error");
         }
-      } else {
+      } else if (type == "0") {
         var rs =
             await apiProvider.controller_box(ctl, id_carname_now.toString());
         if (rs.statusCode == 200) {
@@ -375,6 +576,10 @@ class _App_testState extends State<App_test> {
           // print(jsonResponse['data'][0]['name']);
           if (jsonResponse['ok'] == true) {
             print("oh");
+            setState(() {
+              state_open = 1;
+              type = ctl;
+            });
             // pushReplacement ไม่ให้สามารถย้อนกลับมาได้
             // เก็บค่าข้อมุล
             // setStringname(jsonResponse['data'][0]['name']);
@@ -425,7 +630,99 @@ class _App_testState extends State<App_test> {
         } else {
           print("Server Error");
         }
-      }
+      } else if (ctl != type && state_open == 1) {
+        String txt_alert = "";
+        if (type == "1") {
+          setState(() {
+            txt_alert = "น้ำ";
+          });
+        } else if (type == "2") {
+          setState(() {
+            txt_alert = "โฟม";
+          });
+        } else {
+          setState(() {
+            txt_alert = "ลม";
+          });
+        }
+        showDialog<String>(
+          context: context,
+          builder: (BuildContext context) => AlertDialog(
+            title: Text('กรุณาปิดการทำงานของ $txt_alert'),
+            // content: const Text('AlertDialog description'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.pop(context, 'OK'),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      } else if (type != "0" && state_open == 0) {
+        var rs =
+            await apiProvider.controller_box(ctl, id_carname_now.toString());
+        if (rs.statusCode == 200) {
+          // แปลงเป็น json
+          print(json.decode(rs.body));
+          var jsonResponse = await json.decode(rs.body);
+          // print(jsonResponse['data'][0]['name']);
+          if (jsonResponse['ok'] == true) {
+            print("oh");
+            setState(() {
+              state_open = 1;
+              type = ctl;
+            });
+            // pushReplacement ไม่ให้สามารถย้อนกลับมาได้
+            // เก็บค่าข้อมุล
+            // setStringname(jsonResponse['data'][0]['name']);
+            // SharedPreferences prefs = await SharedPreferences.getInstance();
+            // prefs.setString(
+            //     'username', (jsonResponse['data'][0]['username'].toString()));
+            // Navigator.pushReplacement(
+            //     context, MaterialPageRoute(builder: (context) => Home_menu()));
+            // ignore: use_build_context_synchronously
+            showDialog<String>(
+              context: context,
+              builder: (BuildContext context) => AlertDialog(
+                title: const Text('เริ่มการทำงาน'),
+                // content: const Text('AlertDialog description'),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () => {Navigator.of(context).pop()},
+                    // Navigator.push(
+                    //     context,
+                    //     // App_test
+                    //     MaterialPageRoute(
+                    //         builder: (context) => App_test(
+                    //             credit: credit_now, id_carname: id_carname_now))),
+                    child: const Text('OK'),
+                  ),
+                ],
+              ),
+            );
+          } else {
+            // ยังทำไม่ได้
+            // print('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+            // ignore: use_build_context_synchronously
+            showDialog<String>(
+              context: context,
+              builder: (BuildContext context) => AlertDialog(
+                title: const Text('ข้อมูลไม่ถูกต้อง'),
+                // content: const Text('AlertDialog description'),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, 'OK'),
+                    child: const Text('OK'),
+                  ),
+                ],
+              ),
+            );
+          }
+          // if(jsonResponse.length)
+        } else {
+          print("Server Error");
+        }
+      } else {}
     } catch (error) {
       print(error);
     }
@@ -717,7 +1014,7 @@ class _App_testState extends State<App_test> {
                     ),
                     child: Center(
                       child: Text(
-                        '${credit_show} ',
+                        '${credit_show / credit_dev!}  ฿',
                         style: TextStyle(
                           fontSize: 36,
                           fontFamily: 'Kodchasan',
@@ -737,13 +1034,11 @@ class _App_testState extends State<App_test> {
 
                           // Color backgroundColor = Colors.white;
                           // ใส่โค้ดที่คุณต้องการให้ทำงานเมื่อปุ่มถูกแตะ
-                          setState(() {
-                            if (type == "1") {
-                              type = "";
-                            } else {
-                              type = "1";
-                            }
-                          });
+                          // setState(() {
+
+                          //     type = "";
+
+                          // });
 
                           // ใส่โค้ดที่คุณต้องการให้ทำงานเมื่อปุ่มถูกแตะ
                           print('น้ำ');
@@ -780,13 +1075,13 @@ class _App_testState extends State<App_test> {
                       InkWell(
                         onTap: () {
                           docheck("2");
-                          setState(() {
-                            if (type == "2") {
-                              type = "";
-                            } else {
-                              type = "2";
-                            }
-                          });
+                          // setState(() {
+                          //   if (type == "2") {
+                          //     type = "";
+                          //   } else {
+                          //     type = "2";
+                          //   }
+                          // });
                           // ใส่โค้ดที่คุณต้องการให้ทำงานเมื่อปุ่มถูกแตะ
                           print('โฟม');
                         },
@@ -824,13 +1119,13 @@ class _App_testState extends State<App_test> {
                   InkWell(
                     onTap: () {
                       docheck("3");
-                      setState(() {
-                        if (type == "3") {
-                          type = "";
-                        } else {
-                          type = "3";
-                        }
-                      });
+                      // setState(() {
+                      //   if (type == "3") {
+                      //     type = "";
+                      //   } else {
+                      //     type = "3";
+                      //   }
+                      // });
                       // ใส่โค้ดที่คุณต้องการให้ทำงานเมื่อปุ่มถูกแตะ
                       print('ลม');
                     },
@@ -863,7 +1158,39 @@ class _App_testState extends State<App_test> {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(0, 40, 10, 0),
+                    padding: const EdgeInsets.fromLTRB(0, 20, 0, 0),
+                    child: Column(children: [
+                      Text(
+                        'น้ำราคา ${credit_water! / credit_dev!} ฿ ต่อ 2 วินาที',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontFamily: 'Kodchasan',
+                          color: Colors.black,
+                        ),
+                        textAlign: TextAlign.right,
+                      ),
+                      Text(
+                        'โฟมราคา ${credit_foam! / credit_dev!} ฿ ต่อ 2 วินาที',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontFamily: 'Kodchasan',
+                          color: Colors.black,
+                        ),
+                        textAlign: TextAlign.right,
+                      ),
+                      Text(
+                        'ลมราคา ${credit_wind! / credit_dev!} ฿ ต่อ 2 วินาที',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontFamily: 'Kodchasan',
+                          color: Colors.black,
+                        ),
+                        textAlign: TextAlign.start,
+                      ),
+                    ]),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(0, 20, 10, 0),
                     child: Container(
                         height: 60,
                         width: double.infinity, //ประกาศเต็มจอ

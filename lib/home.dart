@@ -33,6 +33,7 @@ class _HomePageState extends State<HomePage> {
   late double longitude;
   late Point startLocation;
   late Point endLocation;
+  late double credit_dev;
   final List<Widget> myList_location = [];
   bool _isLoading = true;
   bool _isLoadingmap = true;
@@ -115,13 +116,17 @@ class _HomePageState extends State<HomePage> {
             myList_location.add(map_api(
                 map['name_branch'],
                 (distance / 1000).toStringAsFixed(3) + ' ม.',
-                "${map['id_branch']}"));
+                "${map['id_branch']}",
+                latitude,
+                longitude));
             setState(() {});
           } else {
             myList_location.add(map_api(
                 map['name_branch'],
                 (distance / 1000).toStringAsFixed(3) + ' กม.',
-                "${map['id_branch']}"));
+                "${map['id_branch']}",
+                latitude,
+                longitude));
             setState(() {});
           }
         }
@@ -142,19 +147,36 @@ class _HomePageState extends State<HomePage> {
         var jsonResponse = json.decode(rs.body);
 
         if (jsonResponse['ok'] == true) {
+          // credit_point
+          credit_dev = double.parse(
+              jsonResponse['results_credit_now'][0]['credit_point']);
+          print(
+              "credit_now => ${jsonResponse['results_credit_now'][0]['credit_point']}");
           print(jsonResponse['data'][0]['money']);
           print(jsonResponse['data'][0]['fname']);
           setState(() {
             objcustomer['fname'] = jsonResponse['data'][0]['fname'].toString();
             objcustomer['lname'] = jsonResponse['data'][0]['lname'].toString();
-            objcustomer['money'] = NumberFormat('#,###.##')
-                .format(double.parse(jsonResponse['data'][0]['money']));
+            objcustomer['money'] = NumberFormat('#,###.##').format(
+                double.parse(jsonResponse['data'][0]['money']) /
+                    double.parse(
+                        jsonResponse['results_credit_now'][0]['credit_point']));
+
             objcustomer['point'] = NumberFormat('#,###.##')
                 .format(double.parse(jsonResponse['data'][0]['point']));
             objcustomer['img'] = jsonResponse['data'][0]['img'].toString();
           });
-          prefs.setString('money',
-              (double.parse(jsonResponse['data'][0]['money']).toString()));
+          prefs.setString(
+              'money',
+              (double.parse(jsonResponse['data'][0]['money']) /
+                      double.parse(jsonResponse['results_credit_now'][0]
+                          ['credit_point']))
+                  .toString());
+          prefs.setString(
+              'credit_dev',
+              (double.parse(
+                      jsonResponse['results_credit_now'][0]['credit_point']))
+                  .toString());
           _isLoading = false;
         } else {
           print('ok != true');
@@ -220,7 +242,8 @@ class _HomePageState extends State<HomePage> {
   //   );
   // }
 
-  Widget map_api(String name_location, String distance, String id_data) {
+  Widget map_api(String name_location, String distance, String id_data,
+      double lati, double longti) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 15, 0, 0),
       child: Container(
@@ -232,7 +255,10 @@ class _HomePageState extends State<HomePage> {
               context,
               MaterialPageRoute(
                 builder: (context) => Page_choise_carwash(
-                    data: id_data, name_location: name_location),
+                    data: id_data,
+                    name_location: name_location,
+                    start_lati: lati,
+                    start_longti: longti),
               ),
             );
           },
@@ -379,6 +405,7 @@ class _HomePageState extends State<HomePage> {
                 SizedBox(
                   height: 10,
                 ),
+               
                 Container(
                   height: 100,
                   width: double.infinity,
@@ -388,8 +415,8 @@ class _HomePageState extends State<HomePage> {
                         Padding(
                           padding: const EdgeInsets.fromLTRB(0, 10, 0, 10),
                           child: Container(
-                            width: 130,
-                            height: 80,
+                            width: 150,
+                            height: 90,
                             // decoration: BoxDecoration(
                             //     color: Colors.green,
                             //     borderRadius: BorderRadius.circular(5),
@@ -436,8 +463,8 @@ class _HomePageState extends State<HomePage> {
                         Padding(
                           padding: const EdgeInsets.all(10.0),
                           child: Container(
-                            width: 130,
-                            height: 80,
+                            width: 150,
+                            height: 90,
                             child: ElevatedButton(
                                 onPressed: () {
                                   Navigator.push(
@@ -468,7 +495,7 @@ class _HomePageState extends State<HomePage> {
                                           fontSize: 12,
                                           fontFamily: 'Kodchasan',
                                           color: Colors.black),
-                                      textAlign: TextAlign.right,
+                                      textAlign: TextAlign.start,
                                     ),
                                   ],
                                 )),

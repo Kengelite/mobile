@@ -10,8 +10,8 @@ import 'package:path_provider/path_provider.dart';
 class ApiProvider {
   ApiProvider();
 
-//  String endPoint = 'https://anxious-slug-peplum.cyclic.app/';
-  String endPoint = 'http://10.0.2.2:3000';
+  String endPoint = 'https://anxious-slug-peplum.cyclic.app/';
+  // String endPoint = 'http://10.0.2.2:3000';
   Future<http.Response> doLogin(String username, String password) async {
     print("sswqwq");
 
@@ -76,6 +76,18 @@ class ApiProvider {
     // String _url = '$endPoint/branch_location';
     var _url = Uri.parse('$endPoint/branch_location');
     var json = jsonEncode({"longi": '$longi', "lati": '$lati'});
+
+    return await http.post(_url,
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: json);
+  }
+
+  Future<http.Response> addcomment(String comment) async {
+    // String _url = '$endPoint/branch_location';
+    var _url = Uri.parse('$endPoint/addcomment');
+    var json = jsonEncode({"comment": '$comment'});
 
     return await http.post(_url,
         headers: {
@@ -153,15 +165,15 @@ class ApiProvider {
         body: json);
   }
 
-  Future<http.Response> add_use_washcar(
-      String email, String car_idname, int credit_free,int check_send_data) async {
+  Future<http.Response> add_use_washcar(String email, String car_idname,
+      int credit_free, int check_send_data) async {
     // String _url = '$endPoint/data_payment';
     var _url = Uri.parse('$endPoint/add_use_washcar');
     var json = jsonEncode({
       "email_cus": '$email',
       "car_idname": '$car_idname',
       "credit_free": '$credit_free',
-      "check_send_data":check_send_data
+      "check_send_data": check_send_data
     });
     return await http.post(_url,
         headers: {
@@ -171,7 +183,7 @@ class ApiProvider {
   }
 
   Future<http.Response> send_use_carwash(String email, String price,
-      String promotion, String id_car, String balance,int status_check) async {
+      String promotion, String id_car, String balance, int status_check) async {
     // String _url = '$endPoint/data_payment';
     var _url = Uri.parse('$endPoint/send_use_carwash');
     var json = jsonEncode({
@@ -180,7 +192,7 @@ class ApiProvider {
       "promotion": '$promotion',
       "id_car": '$id_car',
       "balance": '$balance',
-        "status_check": '$status_check'
+      "status_check": '$status_check'
     });
     return await http.post(_url,
         headers: {
@@ -190,12 +202,15 @@ class ApiProvider {
   }
 
   Future<http.Response> end_use_carwash(
-       String id_car,int status_check) async {
+      String email, String id_car, int status_check, String promotion) async {
     // String _url = '$endPoint/data_payment';
     var _url = Uri.parse('$endPoint/end_use_carwash');
-    var json = jsonEncode(
-        { "id_car": '$id_car',
-"status_check": '$status_check'});
+    var json = jsonEncode({
+      "id_car": '$id_car',
+      "promotion": '$promotion',
+      "email_cus": '$email',
+      "status_check": '$status_check'
+    });
     return await http.post(_url,
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',

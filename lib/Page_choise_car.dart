@@ -3,10 +3,16 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'api_provider.dart';
 import 'map.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class Page_choise_carwash extends StatefulWidget {
   final String data, name_location;
-  const Page_choise_carwash({required this.data, required this.name_location});
+  final double start_lati, start_longti;
+  const Page_choise_carwash(
+      {required this.data,
+      required this.name_location,
+      required this.start_lati,
+      required this.start_longti});
 
   @override
   State<Page_choise_carwash> createState() => _Page_choise_carwashState();
@@ -17,13 +23,31 @@ class _Page_choise_carwashState extends State<Page_choise_carwash> {
   ApiProvider apiProvider = ApiProvider();
   late List resul_data_car = [];
   String name_branch = '';
+  late double start_lati;
+  late double start_longti;
   @override
   void initState() {
     super.initState();
     receivedData_id = widget.data;
     name_branch = widget.name_location;
+    start_lati = widget.start_lati;
+    start_longti = widget.start_longti; // Fix the typo here
     data_car();
-    // print(name_branch);
+  }
+
+  void openMap(double startLatitude, double startLongitude,
+      double destinationLatitude, double destinationLongitude) async {
+    // String mapUrl =
+    // 'https://www.google.com/maps/dir/?api=1&origin=$startLatitude,$startLongitude&destination=$destinationLatitude,$destinationLongitude';
+    Uri mapUrl = Uri.parse(
+        'https://www.google.com/maps/dir/?api=1&origin=$startLatitude,$startLongitude&destination=$destinationLatitude,$destinationLongitude');
+    if (!await launchUrl(mapUrl)) {
+      print('Could not launch $mapUrl');
+      throw Exception('Could not launch $mapUrl');
+    } else {
+      print('Error getting location: $mapUrl');
+      // throw 'Could not launch $mapUrl';
+    }
   }
 
   data_car() async {
@@ -66,7 +90,7 @@ class _Page_choise_carwashState extends State<Page_choise_carwash> {
           style: TextStyle(
             fontSize: 24,
             fontFamily: 'Kodchasan',
-            color: Colors.white,
+            color: Colors.black,
           ),
         ),
       ),
@@ -147,15 +171,20 @@ class _Page_choise_carwashState extends State<Page_choise_carwash> {
                               height: 40,
                               child: ElevatedButton(
                                 onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => MapSample(
-                                          li: double.parse(data_c['latitude']),
-                                          long: double.parse(
-                                              data_c['longitude'])),
-                                    ),
-                                  );
+                                  openMap(
+                                      start_lati,
+                                      start_longti,
+                                      double.parse(data_c['latitude']),
+                                      double.parse(data_c['longitude']));
+                                  // Navigator.push(
+                                  //   context,
+                                  //   MaterialPageRoute(
+                                  //     builder: (context) => MapSample(
+                                  //         li: double.parse(data_c['latitude']),
+                                  //         long: double.parse(
+                                  //             data_c['longitude'])),
+                                  //   ),
+                                  // );
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.blue.shade400,

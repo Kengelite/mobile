@@ -13,7 +13,7 @@ class _ManualPageState extends State<ManualPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-     appBar: AppBar(
+      appBar: AppBar(
         title: Text('คู่มือการใช้งาน'),
       ),
       body: SingleChildScrollView(
@@ -29,12 +29,11 @@ class _ManualPageState extends State<ManualPage> {
                       height: 200,
                       child: Image.asset('images/wash.jpg'),
                     ),
-                  
                     Padding(
                       padding: const EdgeInsets.fromLTRB(0, 20, 0, 0),
                       child: Container(
                         child: Text(
-                          "1.สแกน 2. เลือกเวลา 3.ชำระเงิน 4.เปิดระบบ 5.ล้างรถ",
+                          " 1.เติมเงินเข้าระบบ 2.สแกน  3.เปิดระบบ 4.ล้างรถ",
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.black,
